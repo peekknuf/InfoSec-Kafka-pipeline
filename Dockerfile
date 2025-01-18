@@ -14,6 +14,12 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY producer/ ./producer/
 COPY consumer/ ./consumer/
 
+COPY start.sh .
+RUN chmod +x start.sh
+
+RUN useradd -m appuser
+USER appuser
+
 # Set the default command to use Python
-CMD ["python"]
+CMD ["./start.sh"]
 
