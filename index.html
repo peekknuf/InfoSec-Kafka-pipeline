@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Containerized Pipeline Diagram</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+        }
+        .main-container {
+            fill: #f8f9fa;
+            stroke: #dee2e6;
+            stroke-width: 3;
+            rx: 15;
+            ry: 15;
+        }
+        .docker-header {
+            font-size: 14px;
+            font-weight: bold;
+            fill: #333;
+        }
+        .label {
+            font-size: 12px;
+            text-anchor: middle;
+            font-weight: 500;
+        }
+        .link {
+            stroke: #6c757d;
+            stroke-width: 2;
+        }
+    </style>
+</head>
+<body>
+    <svg id="pipelineDiagram" width="1200" height="600"></svg>
+    <script>
+        const data = [
+            { id: 1, name: "Log Generation", logo: "images/logs.png", x: 100, y: 250 },
+            { id: 2, name: "Object Storage", logo: "images/folder.png", x: 300, y: 250 },
+            { id: 3, name: "Kafka Producer", logo: "images/kafka.png", x: 500, y: 250 },
+            { id: 4, name: "Kafka Consumer", logo: "images/kafka.png", x: 700, y: 250 },
+            { id: 5, name: "PostgreSQL", logo: "images/postgresql.png", x: 900, y: 250 },
+            { id: 6, name: "Superset", logo: "images/superset.png", x: 1100, y: 180 },
+            { id: 7, name: "Grafana", logo: "images/grafana.png", x: 1100, y: 320 }
+        ];
+
+        const links = [
+            { source: 1, target: 2 },
+            { source: 2, target: 3 },
+            { source: 3, target: 4 },
+            { source: 4, target: 5 },
+            { source: 5, target: 6 },
+            { source: 5, target: 7 }
+        ];
+
+        const svg = d3.select("#pipelineDiagram");
+
+        // Add main Docker container
+        svg.append("rect")
+            .attr("class", "main-container")
+            .attr("x", 50)
+            .attr("y", 80)
+            .attr("width", 1100)
+            .attr("height", 400);
+
+        // Add Docker header
+        const headerGroup = svg.append("g")
+            .attr("transform", "translate(70, 110)");
+
+        headerGroup.append("image")
+            .attr("xlink:href", "images/docker.png")
+            .attr("width", 30)
+            .attr("height", 30);
+
+        headerGroup.append("text")
+            .attr("class", "docker-header")
+            .attr("x", 40)
+            .attr("y", 20)
+            .text("Docker Container");
+
+        // Add arrow marker
+        svg.append("defs").append("marker")
+            .attr("id", "arrow")
+            .attr("viewBox", "0 0 10 10")
+            .attr("refX", 10)
+            .attr("refY", 5)
+            .attr("markerWidth", 6)
+            .attr("markerHeight", 6)
+            .attr("orient", "auto")
+            .append("path")
+            .attr("d", "M 0 0 L 10 5 L 0 10 Z")
+            .attr("fill", "#6c757d");
+
+        // Create links
+        svg.selectAll("line")
+            .data(links)
+            .enter()
+            .append("line")
+            .attr("class", "link")
+            .attr("x1", d => data[d.source - 1].x + 50)
+            .attr("y1", d => data[d.source - 1].y)
+            .attr("x2", d => data[d.target - 1].x - 50)
+            .attr("y2", d => data[d.target - 1].y)
+            .attr("marker-end", "url(#arrow)");
+
+        // Add nodes
+        const nodeGroup = svg.selectAll(".node")
+            .data(data)
+            .enter()
+            .append("g")
+            .attr("class", "node")
+            .attr("transform", d => `translate(${d.x}, ${d.y})`);
+
+        // Add service logos
+        nodeGroup.append("image")
+            .attr("xlink:href", d => d.logo)
+            .attr("width", 50)
+            .attr("height", 50)
+            .attr("x", -25)
+            .attr("y", -25);
+
+        // Add service labels
+        nodeGroup.append("text")
+            .attr("class", "label")
+            .attr("dy", 40)
+            .text(d => d.name);
+    </script>
+</body>
+</html>
