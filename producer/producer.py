@@ -3,7 +3,16 @@ import os
 import logging
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
-from confluent_kafka import Producer
+from confluent_kafka import Producer, KafkaException
+
+def kafka_health_check():
+    try:
+        producer.produce(KAFKA_TOPIC, value="Health check")
+        producer.flush()
+        logging.info("Kafka producer is healthy")
+    except KafkaException as e:
+        logging.error(f"Kafka producer is not healthy: {e}")
+        time.sleep(5)
 
 # Configuration
 LOG_FILE_PATH = "/app/logs/logs.log"  # Path to the log file in the mounted volume
@@ -66,6 +75,7 @@ class LogHandler(FileSystemEventHandler):
 
 if __name__ == "__main__":
     # Read all existing logs at startup
+    kafka_health_check()
     read_existing_logs()
 
     # Start monitoring the file for new logs

@@ -5,7 +5,7 @@ networks:
     driver: bridge
 
 services:
-  producer:
+  kafka-job:
     build:
       context: .
     volumes:
@@ -13,20 +13,12 @@ services:
     depends_on:
       kafka:
         condition: service_healthy
-    networks:
-      - app_network
-
-  consumer:
-    build:
-      context: .
-    depends_on:
-      kafka:
-        condition: service_healthy
       postgres:
         condition: service_healthy
     networks:
       - app_network
-
+    command: ./start.sh
+  
   postgres:
     image: postgres:15
     environment:

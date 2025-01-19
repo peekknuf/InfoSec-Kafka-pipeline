@@ -17,9 +17,6 @@ COPY consumer/ ./consumer/
 COPY start.sh .
 RUN chmod +x start.sh
 
-RUN useradd -m appuser
-USER appuser
-
 # Set the default command to use Python
 CMD ["./start.sh"]
 

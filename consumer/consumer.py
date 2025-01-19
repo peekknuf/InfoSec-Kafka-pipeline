@@ -164,28 +164,36 @@ def create_kafka_consumer():
         raise
 
 def consume_logs():
-    """Consume logs from Kafka and store them in PostgreSQL."""
     conn = create_postgres_connection()
     create_log_table(conn)
     consumer = create_kafka_consumer()
 
     try:
+        logging.info("Starting the Kafka consumer loop...")
         while True:
+            logging.debug("Polling for messages...")
             msg = consumer.poll(timeout=1.0)
             if msg is None:
+                logging.debug("No message received.")
                 continue
+
             if msg.error():
+                logging.error(f"Kafka error: {msg.error()}")
                 if msg.error().code() == KafkaError._PARTITION_EOF:
-                    logging.info(f"Reached end of partition: {msg.partition()}")
-                elif msg.error():
+                    logging.info(f"End of partition reached: {msg.partition()}")
+                else:
                     raise KafkaException(msg.error())
             else:
                 log_message = msg.value().decode("utf-8")
+                logging.debug(f"Received log message: {log_message}")
                 log_data = parse_log(log_message)
                 if log_data:
                     insert_log(conn, log_data)
     except KeyboardInterrupt:
         logging.info("Consumer interrupted by user.")
+    except Exception as e:
+        logging.error(f"Unexpected error in consumer loop: {e}")
+        raise
     finally:
         consumer.close()
         conn.close()
