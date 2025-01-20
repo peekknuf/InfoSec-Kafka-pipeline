@@ -92,6 +92,39 @@ def create_log_table(conn):
         logging.error(f"Failed to create logs table: {e}")
         raise
 
+def create_extension(conn):
+    """
+    create a timescaledb extension 
+    """
+    try:
+        with conn.cursor() as cursor:
+            cursor.execute(
+             """
+             CREATE EXTENSION IF NOT EXISTS timescaledb CASCADE;
+             """
+            )
+            conn.commit()
+            logging.info("Created timescaledb extension (if it didn't exist).")
+    except Exception as e:
+        logging.error(f"Failed to create timescaledb extension: {e}")
+        raise
+
+
+def create_hypertable(conn):
+    try:
+        with conn.cursor() as cursor:
+            cursor.execute(
+                """
+                SELECT create_hypertable('logs', 'timestamp', chunk_time_interval => INTERVAL '1 second');
+                """
+            )
+            conn.commit()
+            logging.info("Created hypertable.")
+    except Exception as e:
+        logging.error(f"Failed to create hypertable: {e}")
+        raise
+
+
 def insert_log(conn, log_data):
     """Insert a log message into the PostgreSQL database."""
     try:
@@ -153,7 +186,7 @@ def create_kafka_consumer():
             {
                 "bootstrap.servers": KAFKA_BROKER,
                 "group.id": GROUP_ID,
-                "auto.offset.reset": "earliest",
+                "auto.offset.reset": "latest",
             }
         )
         consumer.subscribe([KAFKA_TOPIC])
@@ -166,6 +199,8 @@ def create_kafka_consumer():
 def consume_logs():
     conn = create_postgres_connection()
     create_log_table(conn)
+    create_extension(conn)
+    create_hypertable(conn)
     consumer = create_kafka_consumer()
 
     try:

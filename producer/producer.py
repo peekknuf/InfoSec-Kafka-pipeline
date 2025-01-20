@@ -20,7 +20,11 @@ KAFKA_TOPIC = os.getenv("KAFKA_TOPIC", "log_topic")
 KAFKA_BROKER = os.getenv("KAFKA_BROKER", "kafka:9092")
 
 # Kafka producer configuration
-producer = Producer({"bootstrap.servers": KAFKA_BROKER})
+producer = Producer({
+    "bootstrap.servers": KAFKA_BROKER,
+    "linger.ms": 5,  # Adds a delay before sending a batch, allowing more messages to accumulate
+    "batch.size": 524288  # Sets batch size to 512 KB
+})
 
 # Logging setup
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")

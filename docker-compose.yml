@@ -1,4 +1,3 @@
-version: '3.8'
 
 networks:
   app_network:
@@ -20,7 +19,7 @@ services:
     command: ./start.sh
   
   postgres:
-    image: postgres:15
+    image: timescale/timescaledb:latest-pg17 
     environment:
       POSTGRES_USER: user
       POSTGRES_PASSWORD: password
@@ -28,7 +27,8 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - postgres_timescale_data:/var/lib/postgresql/data
+      # - /home/code/streaming_pipeline/postgresql.conf:var/lib/postgresql/data/postgresql.conf
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U user -d logs_db"]
       interval: 5s
@@ -72,19 +72,6 @@ services:
     networks:
       - app_network
 
-  superset:
-    image: apache/superset:latest
-    environment:
-      SUPERSET_LOAD_EXAMPLES: "yes"
-      SUPERSET_SECRET_KEY: "a_very_secret_key"
-      SUPERSET_DATABASE_URL: "postgresql+psycopg2://user:password@postgres:5432/logs_db"
-    depends_on:
-      postgres:
-        condition: service_healthy
-    ports:
-      - "8088:8088"
-    networks:
-      - app_network
 
   grafana:
     image: grafana/grafana:latest
@@ -95,6 +82,26 @@ services:
     networks:
       - app_network
 
+  # flink-jobmanager:
+  #   image: flink:latest
+  #   ports:
+  #     - "8081:8081"
+  #   environment:
+  #     - JOB_MANAGER_RPC_ADDRESS=flink-jobmanager
+  #   command: jobmanager
+  #   networks:
+  #     - app_network
+  #
+  # flink-taskmanager:
+  #   image: flink:latest
+  #   depends_on:
+  #     - flink-jobmanager
+  #   environment:
+  #     - JOB_MANAGER_RPC_ADDRESS=flink-jobmanager
+  #   command: taskmanager
+  #   networks:
+  #     - app_network
+
 volumes:
-  postgres_data:
+  postgres_timescale_data:
   grafana_data:
