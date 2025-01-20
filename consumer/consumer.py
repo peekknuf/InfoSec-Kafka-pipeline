@@ -3,23 +3,22 @@ import logging
 import re
 from confluent_kafka import Consumer, KafkaError, KafkaException
 import psycopg2
+from dotenv import load_dotenv
 
-# Configuration
-KAFKA_TOPIC = os.getenv("KAFKA_TOPIC", "log_topic")
-KAFKA_BROKER = os.getenv("KAFKA_BROKER", "kafka:9092")
-GROUP_ID = "log_consumer_group"
+load_dotenv()
 
-# PostgreSQL configuration
-POSTGRES_HOST = os.getenv("POSTGRES_HOST", "postgres")
-POSTGRES_PORT = os.getenv("POSTGRES_PORT", "5432")
-POSTGRES_DB = os.getenv("POSTGRES_DB", "logs_db")
-POSTGRES_USER = os.getenv("POSTGRES_USER", "user")
-POSTGRES_PASSWORD = os.getenv("POSTGRES_PASSWORD", "password")
+KAFKA_TOPIC = os.getenv("KAFKA_TOPIC")
+KAFKA_BROKER = os.getenv("KAFKA_BROKER")
+GROUP_ID = os.getenv("GROUP_ID")
 
-# Logging setup
+POSTGRES_HOST = os.getenv("POSTGRES_HOST")
+POSTGRES_PORT = os.getenv("POSTGRES_PORT")
+POSTGRES_DB = os.getenv("POSTGRES_DB")
+POSTGRES_USER = os.getenv("POSTGRES_USER")
+POSTGRES_PASSWORD = os.getenv("POSTGRES_PASSWORD")
+
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 
-# Regex to parse the log
 log_pattern = re.compile(
     r"(?P<timestamp>\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d+[+-]\d{2}:\d{2}) \| "
     r"(?P<log_id>ACT-\d{8}T\d{6}-\d+) \| "
@@ -34,11 +33,11 @@ log_pattern = re.compile(
     r"os=(?P<os>[^|]*?) "
     r"browser=(?P<browser>[^|]*?) "
     r"device_type=(?P<device_type>[^|]*?) \| "
-    r"action=(?P<action>[^|\s]*) "  # Changed to allow empty value
-    r"status=(?P<status>[^|\s]*) \| "  # Changed to allow empty value
-    r"session_id=(?P<session_id>[^|\s]*) "  # Changed to allow empty value
-    r"request_id=(?P<request_id>[^|\s]*) "  # Changed to allow empty value
-    r"trace_id=(?P<trace_id>[^|\s]*)"  # Changed to allow empty value
+    r"action=(?P<action>[^|\s]*) "
+    r"status=(?P<status>[^|\s]*) \| "
+    r"session_id=(?P<session_id>[^|\s]*) "
+    r"request_id=(?P<request_id>[^|\s]*) "
+    r"trace_id=(?P<trace_id>[^|\s]*)"
 )
 
 def create_postgres_connection():
@@ -93,9 +92,6 @@ def create_log_table(conn):
         raise
 
 def create_extension(conn):
-    """
-    create a timescaledb extension 
-    """
     try:
         with conn.cursor() as cursor:
             cursor.execute(
@@ -156,24 +152,24 @@ def parse_log(log_message):
             return value if value else None
 
         return (
-            match.group("timestamp"),  # Timestamp (required)
-            match.group("log_id"),  # Log ID (required)
-            match.group("event_type"),  # Event Type (required)
-            replace_empty_with_none(match.group("user_id")),  # User ID (required)
-            replace_empty_with_none(match.group("username")),  # Username (optional)
-            replace_empty_with_none(match.group("ip_address")),  # IP Address (required)
-            replace_empty_with_none(match.group("country")),  # Country (optional)
-            replace_empty_with_none(match.group("region")),  # Region (optional)
-            replace_empty_with_none(match.group("city")),  # City (optional)
-            replace_empty_with_none(match.group("coordinates")),  # Coordinates (optional)
-            replace_empty_with_none(match.group("os")),  # OS (optional)
-            replace_empty_with_none(match.group("browser")),  # Browser (optional)
-            replace_empty_with_none(match.group("device_type")),  # Device Type (optional)
-            replace_empty_with_none(match.group("action")),  # Action (required)
-            replace_empty_with_none(match.group("status")),  # Status (required)
-            replace_empty_with_none(match.group("session_id")),  # Session ID (required)
-            replace_empty_with_none(match.group("request_id")),  # Request ID (required)
-            replace_empty_with_none(match.group("trace_id")),  # Trace ID (required)
+            match.group("timestamp"), 
+            match.group("log_id"), 
+            match.group("event_type"),
+            replace_empty_with_none(match.group("user_id")), 
+            replace_empty_with_none(match.group("username")),
+            replace_empty_with_none(match.group("ip_address")),
+            replace_empty_with_none(match.group("country")),
+            replace_empty_with_none(match.group("region")),
+            replace_empty_with_none(match.group("city")),
+            replace_empty_with_none(match.group("coordinates")),
+            replace_empty_with_none(match.group("os")),
+            replace_empty_with_none(match.group("browser")),
+            replace_empty_with_none(match.group("device_type")),
+            replace_empty_with_none(match.group("action")), 
+            replace_empty_with_none(match.group("status")),
+            replace_empty_with_none(match.group("session_id")),
+            replace_empty_with_none(match.group("request_id")),
+            replace_empty_with_none(match.group("trace_id")),
         )
     else:
         logging.warning(f"Log format is invalid: {log_message}")

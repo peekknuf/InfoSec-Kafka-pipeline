@@ -5,6 +5,15 @@ from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
 from confluent_kafka import Producer, KafkaException
 
+from dotenv import load_dotenv
+
+load_dotenv()
+
+LOG_FILE_PATH = os.getenv("LOG_FILE_PATH")
+
+KAFKA_TOPIC = os.getenv("KAFKA_TOPIC")
+KAFKA_BROKER = os.getenv("KAFKA_BROKER")
+
 def kafka_health_check():
     try:
         producer.produce(KAFKA_TOPIC, value="Health check")
@@ -14,19 +23,14 @@ def kafka_health_check():
         logging.error(f"Kafka producer is not healthy: {e}")
         time.sleep(5)
 
-# Configuration
-LOG_FILE_PATH = "/app/logs/logs.log"  # Path to the log file in the mounted volume
-KAFKA_TOPIC = os.getenv("KAFKA_TOPIC", "log_topic")
-KAFKA_BROKER = os.getenv("KAFKA_BROKER", "kafka:9092")
 
-# Kafka producer configuration
+
 producer = Producer({
     "bootstrap.servers": KAFKA_BROKER,
     "linger.ms": 5,  # Adds a delay before sending a batch, allowing more messages to accumulate
     "batch.size": 524288  # Sets batch size to 512 KB
 })
 
-# Logging setup
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 
 
@@ -78,11 +82,9 @@ class LogHandler(FileSystemEventHandler):
 
 
 if __name__ == "__main__":
-    # Read all existing logs at startup
     kafka_health_check()
     read_existing_logs()
 
-    # Start monitoring the file for new logs
     event_handler = LogHandler()
     observer = Observer()
     observer.schedule(event_handler, path="/app/logs", recursive=False)

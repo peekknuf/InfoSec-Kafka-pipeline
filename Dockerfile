@@ -13,7 +13,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy all source code into the container
 COPY producer/ ./producer/
 COPY consumer/ ./consumer/
-
+COPY .env .
 COPY start.sh .
 RUN chmod +x start.sh
 
