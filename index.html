@@ -3,48 +3,69 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Containerized Pipeline Diagram</title>
+    <title>Fancy Pipeline Diagram</title>
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <style>
         body {
-            font-family: Arial, sans-serif;
+            font-family: 'Arial', sans-serif;
             margin: 0;
             padding: 20px;
+            background: linear-gradient(to bottom, #eef2f3, #ffffff);
         }
         .main-container {
-            fill: #f8f9fa;
-            stroke: #dee2e6;
+            fill: url(#dockerGradient);
+            stroke: #aaa;
             stroke-width: 3;
-            rx: 15;
-            ry: 15;
+            rx: 20;
+            ry: 20;
+            filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.1));
         }
         .docker-header {
-            font-size: 14px;
+            font-size: 16px;
             font-weight: bold;
             fill: #333;
         }
         .label {
             font-size: 12px;
             text-anchor: middle;
-            font-weight: 500;
+            font-weight: 600;
+            fill: #555;
         }
         .link {
             stroke: #6c757d;
             stroke-width: 2;
+            opacity: 0.8;
+            transition: opacity 0.3s;
+        }
+        .link:hover {
+            opacity: 1;
+            stroke: #007bff;
+        }
+        .tooltip {
+            position: absolute;
+            background: rgba(0, 0, 0, 0.75);
+            color: #fff;
+            padding: 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            pointer-events: none;
+            display: none;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
         }
     </style>
 </head>
 <body>
+    <div class="tooltip" id="tooltip"></div>
     <svg id="pipelineDiagram" width="1200" height="600"></svg>
     <script>
         const data = [
-            { id: 1, name: "Log Generation", logo: "images/logs.png", x: 100, y: 250 },
-            { id: 2, name: "Object Storage", logo: "images/folder.png", x: 300, y: 250 },
-            { id: 3, name: "Kafka Producer", logo: "images/kafka.png", x: 500, y: 250 },
-            { id: 4, name: "Kafka Consumer", logo: "images/kafka.png", x: 700, y: 250 },
-            { id: 5, name: "PostgreSQL", logo: "images/postgresql.png", x: 900, y: 250 },
-            { id: 6, name: "Superset", logo: "images/superset.png", x: 1100, y: 180 },
-            { id: 7, name: "Grafana", logo: "images/grafana.png", x: 1100, y: 320 }
+            { id: 1, name: "Log Generation", description: "Generates logs outside Docker", logo: "images/logs.png", x: 50, y: 250 },
+            { id: 2, name: "Object Storage", description: "Stores logs for processing", logo: "images/folder.png", x: 300, y: 250 },
+            { id: 3, name: "Kafka Producer", description: "Publishes logs to Kafka topics", logo: "images/kafka.png", x: 500, y: 250 },
+            { id: 4, name: "Kafka Consumer", description: "Consumes logs from Kafka topics", logo: "images/kafka.png", x: 700, y: 250 },
+            { id: 5, name: "PostgreSQL", description: "Stores processed data", logo: "images/postgresql.png", x: 900, y: 250 },
+            { id: 6, name: "Superset", description: "Visualizes data in dashboards", logo: "images/superset.png", x: 1100, y: 180 },
+            { id: 7, name: "Grafana", description: "Monitors metrics in real-time", logo: "images/grafana.png", x: 1100, y: 320 }
         ];
 
         const links = [
@@ -57,18 +78,37 @@
         ];
 
         const svg = d3.select("#pipelineDiagram");
+        const tooltip = d3.select("#tooltip");
+
+        // Add gradients
+        const defs = svg.append("defs");
+        defs.append("linearGradient")
+            .attr("id", "dockerGradient")
+            .attr("x1", "0%")
+            .attr("y1", "0%")
+            .attr("x2", "100%")
+            .attr("y2", "100%")
+            .selectAll("stop")
+            .data([
+                { offset: "0%", color: "#d1e7ff" },
+                { offset: "100%", color: "#a5d8ff" }
+            ])
+            .enter()
+            .append("stop")
+            .attr("offset", d => d.offset)
+            .attr("stop-color", d => d.color);
 
         // Add main Docker container
         svg.append("rect")
             .attr("class", "main-container")
-            .attr("x", 50)
+            .attr("x", 100)
             .attr("y", 80)
-            .attr("width", 1100)
+            .attr("width", 1050)
             .attr("height", 400);
 
         // Add Docker header
         const headerGroup = svg.append("g")
-            .attr("transform", "translate(70, 110)");
+            .attr("transform", "translate(120, 110)");
 
         headerGroup.append("image")
             .attr("xlink:href", "images/docker.png")
@@ -104,7 +144,11 @@
             .attr("y1", d => data[d.source - 1].y)
             .attr("x2", d => data[d.target - 1].x - 50)
             .attr("y2", d => data[d.target - 1].y)
-            .attr("marker-end", "url(#arrow)");
+            .attr("marker-end", "url(#arrow)")
+            .style("opacity", 0)
+            .transition()
+            .duration(1000)
+            .style("opacity", 1);
 
         // Add nodes
         const nodeGroup = svg.selectAll(".node")
@@ -120,13 +164,26 @@
             .attr("width", 50)
             .attr("height", 50)
             .attr("x", -25)
-            .attr("y", -25);
+            .attr("y", -25)
+            .style("filter", "drop-shadow(0 4px 6px rgba(0,0,0,0.2))")
+            .on("mouseover", (event, d) => {
+                tooltip.style("display", "block")
+                    .style("left", `${event.pageX + 10}px`)
+                    .style("top", `${event.pageY}px`)
+                    .text(d.description);
+            })
+            .on("mouseout", () => tooltip.style("display", "none"));
 
         // Add service labels
         nodeGroup.append("text")
             .attr("class", "label")
             .attr("dy", 40)
-            .text(d => d.name);
+            .text(d => d.name)
+            .style("opacity", 0)
+            .transition()
+            .duration(1000)
+            .style("opacity", 1);
     </script>
 </body>
 </html>
+
