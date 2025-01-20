@@ -38,5 +38,18 @@ https://rawcdn.githack.com/peekknuf/streaming_pipeline/refs/heads/main/index.htm
 
 ---
 
-Note: this is not a final version, rather a working prototype, work in progress including processing and vizualization tools.
+## Actual hardware requirements
+
+### For ~36,000 records/sec (average 370 bytes per record):
+
+1. Kafka: 3 brokers (8 cores, 32 GB RAM, 10+ TB disk each).
+
+2. Kafka Connect/Consumer: 2-4 workers (4-8 cores, 16-32 GB RAM each).
+
+3. PostgreSQL: 1 primary (16-32 cores, 64-128 GB RAM, 50+ TB SSD) + 1 replica.
+
+
+### Note
+
+this is not a final version, rather a working prototype, work in progress including processing and vizualization tools.
 
