@@ -4,11 +4,12 @@ This project implements a log streaming and monitoring pipeline with real-time v
 
 ## Architecture Overview
 
-![View the Architecture Diagram](https://rawcdn.githack.com/peekknuf/streaming_pipeline/refs/heads/main/index.html)
+### View the Architecture Diagram:
+https://rawcdn.githack.com/peekknuf/streaming_pipeline/refs/heads/main/index.html
 
 ### Key Components:
 1. **Log Generation**:
-   - Logs are generated outside the Docker container and saved in a textual format (e.g., `.log` files).
+   - Logs are generated outside the Docker container with a custom tool and saved in a .log format.
    
 2. **Object Storage**:
    - Logs are stored temporarily in a shared object storage location.
@@ -18,7 +19,7 @@ This project implements a log streaming and monitoring pipeline with real-time v
    - **Kafka Consumer** processes the log streams and prepares them for storage.
 
 4. **PostgreSQL(TimescaleDB)**:
-   - Kafka Consumer writes parsed, processed logs into a PostgreSQL database with TimescaleDB.
+   - Kafka Consumer writes parsed, processed logs into a PostgreSQL database with TimescaleDB extension.
 
 5. **Visualization**:
    - **Superset** is used to create dashboards for insights from the log data.
@@ -27,7 +28,7 @@ This project implements a log streaming and monitoring pipeline with real-time v
 ---
 
 ## Prerequisites
-
+### Everything required is in Docker Compose.
 - Docker
 - Python 3.9+
 - Apache Kafka
@@ -37,6 +38,5 @@ This project implements a log streaming and monitoring pipeline with real-time v
 
 ---
 
-
-https://rawcdn.githack.com/peekknuf/streaming_pipeline/refs/heads/main/index.html
+Note: this is not a final version, rather a working prototype, work in progress including processing and vizualization tools.
 
