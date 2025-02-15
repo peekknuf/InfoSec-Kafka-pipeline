@@ -30,19 +30,6 @@ jobs:
       - name: Install dependencies
         run: uv pip install -r requirements.txt
 
-      - name: Cache virtual environment
-        uses: actions/cache@v3
-        with:
-          path: .venv
-          key: venv-${{ runner.os }}-${{ hashFiles('requirements.txt') }}
-          restore-keys: |
-            venv-${{ runner.os }}-
-
-      - name: Upload virtual environment as artifact
-        uses: actions/upload-artifact@v3
-        with:
-          name: venv
-          path: .venv
 
   tests:
     runs-on: ubuntu-latest
