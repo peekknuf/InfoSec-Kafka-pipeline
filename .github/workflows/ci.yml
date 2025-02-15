@@ -9,23 +9,23 @@ on:
       - main
 
 jobs:
-  setup:
+  tests:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
 
       - name: Install uv
         uses: astral-sh/setup-uv@v5
 
       - name: Set up Python
-        uses: actions/setup-python@v5 
+        uses: actions/setup-python@v5
         with:
           python-version-file: "pyproject.toml"
-  tests:
-    runs-on: ubuntu-latest
 
-    steps:
+      - name: Install dependencies
+        run: uv pip install -r requirements.txt
+
       - name: Run tests
         run: pytest
-
