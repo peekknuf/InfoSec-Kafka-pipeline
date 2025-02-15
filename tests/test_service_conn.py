@@ -1,23 +1,16 @@
-import unittest
 from unittest.mock import patch, MagicMock
 from src.consumer.consumer import create_kafka_consumer, create_postgres_connection
 
 
-class TestKafkaConsumer(unittest.TestCase):
-    @patch("confluent_kafka.Consumer")
-    def test_create_kafka_consumer(self, mock_consumer):
+def test_create_kafka_consumer():
+    with patch("confluent_kafka.Consumer") as mock_consumer:
         mock_consumer.return_value = MagicMock()
         consumer = create_kafka_consumer()
-        self.assertIsNotNone(consumer)
+        assert consumer is not None
 
 
-class TestPostgreSQLConnection(unittest.TestCase):
-    @patch("psycopg2.connect")
-    def test_create_postgres_connection(self, mock_connect):
+def test_create_postgres_connection():
+    with patch("psycopg2.connect") as mock_connect:
         mock_connect.return_value = MagicMock()
         conn = create_postgres_connection()
-        self.assertIsNotNone(conn)
-
-
-if __name__ == "__main__":
-    unittest.main()
+        assert conn is not None
