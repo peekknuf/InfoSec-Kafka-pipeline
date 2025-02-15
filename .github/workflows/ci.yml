@@ -22,8 +22,7 @@ jobs:
         python-version: 3.13.1  
 
     - name: Install dependencies using UV
-      run: |
-        pip install uv
+      run: |     
         uv install
 
     - name: Run tests
