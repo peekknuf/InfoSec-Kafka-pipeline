@@ -2,7 +2,7 @@ import pytest
 import warnings
 import yaml
 from unittest.mock import MagicMock
-from consumer.consumer import create_log_table, load_schema_from_yaml
+from src.consumer.consumer import create_log_table
 
 
 @pytest.fixture
@@ -13,8 +13,15 @@ def mock_db_connection():
     return conn, cursor
 
 
+def load_legit_schema_from_yaml(file_path="src/schemas/schema.yml"):
+    """Load schema from YAML configuration."""
+    with open(file_path, "r") as f:
+        schema = yaml.safe_load(f)
+    return schema.get("logs_schema", {})
+
+
 def load_custom_schema():
-    with open("schemas/schema_extra_test.yml", "r") as f:
+    with open("src/schemas/schema_extra_test.yml", "r") as f:
         schema = yaml.safe_load(f)
     return schema.get("logs_schema_extra", {})
 
@@ -26,7 +33,7 @@ def test_create_log_table_schema(mock_db_connection):
 
     create_log_table(conn, table_name="logs", schema=custom_schema)
 
-    expected_columns = set(load_schema_from_yaml().keys())
+    expected_columns = set(load_legit_schema_from_yaml().keys())
     actual_columns = set(custom_schema.keys())
     extra_columns = actual_columns - expected_columns
 

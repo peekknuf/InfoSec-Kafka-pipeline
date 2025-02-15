@@ -1,6 +1,7 @@
 import logging
 import pytest
-from consumer.consumer import parse_log
+from src.consumer.consumer import parse_log
+
 VALID_LOG = (
     "2025-01-18T19:05:00.830128259+01:00 | ACT-20250118T190500-140 | SUSPICIOUS_LOGIN_ATTEMPT | "
     "user_id=u-286259 username= ip_address=83.21.115.122 country= region= city= coordinates=-75.2494,15.4804 "
@@ -38,16 +39,19 @@ INVALID_LOGS = [
     "2025-01-18T19:05:00.830128259+01:00 | ACT-20250118T190500-140 | SUSPICIOUS_LOGIN_ATTEMPT | user_id=u-286259",  # Partial fields
 ]
 
+
 def test_parse_log_valid():
     """Test that a valid log is parsed correctly."""
     result = parse_log(VALID_LOG)
     assert result == EXPECTED_OUTPUT, f"Expected {EXPECTED_OUTPUT}, got {result}"
+
 
 def test_parse_log_invalid():
     """Test that invalid logs return None."""
     for log in INVALID_LOGS:
         result = parse_log(log)
         assert result is None, f"Expected None for invalid log, got {result}"
+
 
 def test_parse_log_edge_cases():
     """Test edge cases for log parsing."""
@@ -78,7 +82,9 @@ def test_parse_log_edge_cases():
         None,  # trace_id (empty → None)
     )
     result = parse_log(log_missing_optional)
-    assert result == expected_missing_optional, f"Expected {expected_missing_optional}, got {result}"
+    assert result == expected_missing_optional, (
+        f"Expected {expected_missing_optional}, got {result}"
+    )
 
     # Log with extra fields (should still parse correctly)
     log_extra_fields = (
@@ -90,9 +96,12 @@ def test_parse_log_edge_cases():
     result = parse_log(log_extra_fields)
     assert result == EXPECTED_OUTPUT, f"Expected {EXPECTED_OUTPUT}, got {result}"
 
+
 def test_parse_log_warning(caplog):
     """Test that invalid logs trigger a warning."""
     invalid_log = "invalid log format"
     with caplog.at_level(logging.WARNING):
         parse_log(invalid_log)
-    assert "Log format is invalid" in caplog.text, "Expected a warning for invalid log format"
+    assert "Log format is invalid" in caplog.text, (
+        "Expected a warning for invalid log format"
+    )

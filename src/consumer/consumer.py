@@ -4,6 +4,7 @@ import re
 from confluent_kafka import Consumer, KafkaError, KafkaException
 import psycopg2
 from dotenv import load_dotenv
+import yaml
 
 load_dotenv()
 
@@ -17,7 +18,9 @@ POSTGRES_DB = os.getenv("POSTGRES_DB")
 POSTGRES_USER = os.getenv("POSTGRES_USER")
 POSTGRES_PASSWORD = os.getenv("POSTGRES_PASSWORD")
 
-logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
+)
 
 log_pattern = re.compile(
     r"(?P<timestamp>\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d+[+-]\d{2}:\d{2}) \| "
@@ -40,6 +43,7 @@ log_pattern = re.compile(
     r"trace_id=(?P<trace_id>[^|\s]*)"
 )
 
+
 def create_postgres_connection():
     """Create a connection to the PostgreSQL database."""
     try:
@@ -56,46 +60,41 @@ def create_postgres_connection():
         logging.error(f"Failed to connect to PostgreSQL: {e}")
         raise
 
-def create_log_table(conn):
-    """Create the logs table if it doesn't exist."""
+
+def load_schema_from_yaml(file_path="../schemas/schema.yml"):
+    """Load schema from YAML configuration."""
+    with open(file_path, "r") as f:
+        schema = yaml.safe_load(f)
+    return schema.get("logs_schema", {})
+
+
+def create_log_table(conn, table_name="logs", schema=None):
+    """Create the logs table if it doesn't exist, with dynamic columns."""
+    if schema is None:
+        schema = load_schema_from_yaml()
+
     try:
         with conn.cursor() as cursor:
-            cursor.execute(
-                """
-                CREATE TABLE IF NOT EXISTS logs (
-                    id SERIAL PRIMARY KEY,
-                    timestamp TIMESTAMP NOT NULL,
-                    log_id TEXT NOT NULL,
-                    event_type TEXT NOT NULL,
-                    user_id TEXT,
-                    username TEXT,
-                    ip_address TEXT,
-                    country TEXT,
-                    region TEXT,
-                    city TEXT,
-                    coordinates TEXT,
-                    os TEXT,
-                    browser TEXT,
-                    device_type TEXT,
-                    action TEXT,
-                    status TEXT,
-                    session_id TEXT,
-                    request_id TEXT,
-                    trace_id TEXT
-                );
-                """
-            )
+            columns = ", ".join([f"{col} {dtype}" for col, dtype in schema.items()])
+
+            create_table_query = f"""
+            CREATE TABLE IF NOT EXISTS {table_name} (
+                {columns}
+            );
+            """
+            cursor.execute(create_table_query)
             conn.commit()
-            logging.info("Created logs table (if it didn't exist).")
+            logging.info(f"Created {table_name} table (if it didn't exist).")
     except Exception as e:
-        logging.error(f"Failed to create logs table: {e}")
+        logging.error(f"Failed to create {table_name} table: {e}")
         raise
+
 
 def create_extension(conn):
     try:
         with conn.cursor() as cursor:
             cursor.execute(
-             """
+                """
              CREATE EXTENSION IF NOT EXISTS timescaledb CASCADE;
              """
             )
@@ -143,6 +142,7 @@ def insert_log(conn, log_data):
         logging.error(f"Failed to insert log into PostgreSQL: {e}")
         raise
 
+
 def parse_log(log_message):
     """Parse the log message into its components."""
     match = log_pattern.match(log_message)
@@ -152,10 +152,10 @@ def parse_log(log_message):
             return value if value else None
 
         return (
-            match.group("timestamp"), 
-            match.group("log_id"), 
+            match.group("timestamp"),
+            match.group("log_id"),
             match.group("event_type"),
-            replace_empty_with_none(match.group("user_id")), 
+            replace_empty_with_none(match.group("user_id")),
             replace_empty_with_none(match.group("username")),
             replace_empty_with_none(match.group("ip_address")),
             replace_empty_with_none(match.group("country")),
@@ -165,7 +165,7 @@ def parse_log(log_message):
             replace_empty_with_none(match.group("os")),
             replace_empty_with_none(match.group("browser")),
             replace_empty_with_none(match.group("device_type")),
-            replace_empty_with_none(match.group("action")), 
+            replace_empty_with_none(match.group("action")),
             replace_empty_with_none(match.group("status")),
             replace_empty_with_none(match.group("session_id")),
             replace_empty_with_none(match.group("request_id")),
@@ -174,6 +174,7 @@ def parse_log(log_message):
     else:
         logging.warning(f"Log format is invalid: {log_message}")
         return None
+
 
 def create_kafka_consumer():
     """Create and configure a Kafka consumer."""
@@ -191,6 +192,7 @@ def create_kafka_consumer():
     except Exception as e:
         logging.error(f"Failed to create Kafka consumer: {e}")
         raise
+
 
 def consume_logs():
     conn = create_postgres_connection()
@@ -229,6 +231,7 @@ def consume_logs():
         consumer.close()
         conn.close()
         logging.info("Kafka consumer and PostgreSQL connection closed.")
+
 
 if __name__ == "__main__":
     consume_logs()
