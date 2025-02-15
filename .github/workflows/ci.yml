@@ -13,19 +13,16 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v2
+      - uses: actions/checkout@v4
 
-    - name: Set up Python
-      uses: actions/setup-python@v2
-      with:
-        python-version: 3.13.1  
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
 
-    - name: Install dependencies using UV
-      run: |     
-        uv install
+      - name: Set up Python
+        run: uv python Install
+        with:
+          python-version-file: "pyproject.toml"
 
-    - name: Run tests
-      run: |
-        pytest tests
+      - name: Run tests
+        run: uv run pytest tests
 
