@@ -21,16 +21,12 @@ jobs:
       with:
         python-version: 3.13.1  
 
-    - name: Install dependencies
+    - name: Install dependencies using UV
       run: |
-        python -m venv venv
-        source venv/bin/activate
-        pip install --upgrade pip
-        pip install -r requirements.txt
+        pip install uv
+        uv install
 
-    # Run tests
-    - name: Run tests with pytest
+    - name: Run tests
       run: |
-        source venv/bin/activate
-        pytest --maxfail=1 --disable-warnings -q
+        pytest tests
 
