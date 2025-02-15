@@ -12,7 +12,7 @@ https://rawcdn.githack.com/peekknuf/streaming_pipeline/refs/heads/main/index.htm
    - Logs are generated outside the Docker container with a custom tool and saved in a .log format.
    
 2. **Object Storage**:
-   - Logs are stored temporarily in a shared object storage location.
+   - Logs are stored temporarily in a shared object storage location
 
 3. **Kafka**:
    - **Kafka Producer** reads logs from object storage and streams them into Kafka topics.
