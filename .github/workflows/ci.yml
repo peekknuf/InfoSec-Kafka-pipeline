@@ -24,16 +24,14 @@ jobs:
         with:
           python-version-file: "pyproject.toml"
 
-      - name: Create virtual environment
-        run: uv venv .venv
-
-      # Install dependencies FROM PYPROJECT.TOML (not requirements.txt)
-      - name: Install dependencies
+      - name: Create and activate virtual environment
         run: |
-          source .venv/bin/activate
-          uv pip install .
+          uv venv .venv
+          echo "VIRTUAL_ENV=.venv" >> $GITHUB_ENV
+          echo "$(pwd)/.venv/bin" >> $GITHUB_PATH
+
+      - name: Install dependencies
+        run: uv pip install .
 
       - name: Run tests
-        run: |
-          source .venv/bin/activate
-          pytest -v
+        run: pytest -v
