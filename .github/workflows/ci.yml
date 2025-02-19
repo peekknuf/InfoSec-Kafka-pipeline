@@ -27,6 +27,7 @@ jobs:
       - name: Create and activate virtual environment
         run: |
           uv venv .venv
+          # required for pytest (trial and error)
           echo "VIRTUAL_ENV=.venv" >> $GITHUB_ENV
           echo "$(pwd)/.venv/bin" >> $GITHUB_PATH
 
