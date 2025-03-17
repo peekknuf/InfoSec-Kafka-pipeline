@@ -2,3 +2,4 @@ confluent-kafka
 watchdog
 psycopg2-binary
 python-dotenv
+PyYAML

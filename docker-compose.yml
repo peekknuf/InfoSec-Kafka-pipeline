@@ -8,7 +8,7 @@ services:
     build:
       context: .
     volumes:
-      - /home/peek/code/log_gen/logs:/app/logs:ro
+      - /home/peek/code/Log-Generation/logs:/app/logs:ro
     depends_on:
       kafka:
         condition: service_healthy
@@ -17,9 +17,9 @@ services:
     networks:
       - app_network
     command: ./start.sh
-  
+
   postgres:
-    image: timescale/timescaledb:latest-pg17 
+    image: timescale/timescaledb:latest-pg17
     environment:
       POSTGRES_USER: user
       POSTGRES_PASSWORD: password
@@ -31,7 +31,7 @@ services:
       # - /home/code/streaming_pipeline/postgresql.conf:var/lib/postgresql/data/postgresql.conf
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U user -d logs_db"]
-      interval: 5s
+      interval: 1s
       timeout: 5s
       retries: 5
     networks:
@@ -73,14 +73,14 @@ services:
       - app_network
 
 
-  grafana:
-    image: grafana/grafana:latest
-    ports:
-      - "3000:3000"
-    volumes:
-      - grafana_data:/var/lib/grafana
-    networks:
-      - app_network
+#  grafana:
+#    image: grafana/grafana:latest
+#    ports:
+#      - "3000:3000"
+#    volumes:
+#      - grafana_data:/var/lib/grafana
+#    networks:
+#      - app_network
 
   # flink-jobmanager:
   #   image: flink:latest
